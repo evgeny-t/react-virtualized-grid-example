@@ -18,14 +18,16 @@ import { DragSource, DropTarget, DragDropContext } from 'react-dnd';
 import ReactDnDHTML5Backend from 'react-dnd-html5-backend';
 
 const actions = {
-  reorder(from, to) {
-    return { type: 'REORDER', from, to };
-  }
+  reorder: (from, to) => 
+    ({ type: 'REORDER', from, to }),
+  resize: (columnIndex, delta) => 
+    ({ type: 'RESIZE', columnIndex, delta }),
 };
 
-const reducer = (state, { type, from, to }) => {
+const reducer = (state, { type, ...rest }) => {
   switch (type) {
     case 'REORDER': {
+      const { from, to } = rest;
       console.log(from, to)
       let order =_.clone(state.metadata.order);
       const column = order[from];
@@ -42,6 +44,24 @@ const reducer = (state, { type, from, to }) => {
       console.log('newState', newState);
       return newState;
     }
+    case 'RESIZE': {
+      const { columnIndex, delta } = rest;
+      const columnKey = state.metadata.order[columnIndex];
+      const width = state.metadata.header[columnKey].width;
+      const newState = {
+        ...state,
+        metadata: {
+          ...state.metadata,
+          header: {
+            ...state.metadata.header,
+            [columnKey]: {
+              width: delta,
+            },
+          },
+        },
+      };
+      return newState;
+    }
     default:
       return state;
   }
@@ -50,14 +70,22 @@ const reducer = (state, { type, from, to }) => {
 const store = createStore(reducer, {
   metadata: {
     header: {
-      id: {},
-      name: {},
-      date: {},
-      type: {},
+      id: {
+        width: 50,
+      },
+      name: {
+        width: 100,
+      },
+      date: {
+        width: 100,
+      },
+      type: {
+        width: 100,
+      },
     },
     order: [
       'id', 'name', 'date', 'type'
-    ]
+    ],
   },
   data: _.chain(100).range()
     .map(id => ({ 
@@ -92,8 +120,9 @@ const dropSpec = {
   }
 };
 
-const moveable = Component => {
+const moveable = () => Component => {
   class Moveable extends Component {
+    state = { startX: 0, startY: 0, endX: 0, endY: 0 }
     constructor(...args) {
       super(...args);
     }
@@ -101,18 +130,40 @@ const moveable = Component => {
       const props = {
         ...this.props,
         onMouseDown(e) {
-          console.log('onMouseDown', e);
-          // e.preventDefault();
-          // e.stopPropagation();
+          console.log('onMouseDown', e, e.clientX, e.clientY);
+        },
+        onMouseMove(e) {
+          // console.log('onMouseMove', e)
         },
         onMouseUp(e) {
           console.log('onMouseUp', e);
         },
-        onDrag(e) {
-          console.log('onDrag', e)
+        onDrag: (e) => {
+          console.log('onDrag', this, e, e.clientX, e.clientY);
+          this && this.setState({
+            endX: e.clientX,
+            endY: e.clientY,
+          });
+          this.props.onMove && 
+            this.props.onMove(
+              this.state.endX - this.state.startX,
+              this.state.endY - this.state.startY);
         },
-        onDragStart(e) {
-          console.log('onDragStart', e)
+        onDragStart: (e) => {
+          console.log('onDragStart', this, e)
+          this && this.setState({
+            startX: e.clientX,
+            startY: e.clientY,
+            endX: e.clientX,
+            endY: e.clientY,
+          });
+        },
+        onDragEnd: (e) => {
+          console.log('onDragEnd', e, e.clientX, e.clientY);
+          this.props.onMove && 
+            this.props.onMove(
+              this.state.endX - this.state.startX,
+              this.state.endY - this.state.startY);
         },
       };
       return <Component {...props} />;
@@ -122,28 +173,39 @@ const moveable = Component => {
   return Moveable;
 };
 
+// TODO(ET): merge _Grip and movable
 class _Grip extends React.Component {
   render() {
-    console.log('offset', this.props.offset)
-    return /* this.props.connectDragSource */(
+    return this.props.connectDragSource(
       <div style={{
-          background: 'transparent',
+          background: this.props.isDragging ? 'black' : 'transparent',
           width: 10,
           height: '100%',
           marginRight: '-5px',
           cursor: 'col-resize',
           zIndex: 1,
         }} {...this.props}
-        onMouseDown={e => e.preventDefault()}
-        onDragStart={e => console.log('onDragStart')}
-        onDrag={e => console.log('onDrag')}
         >
       </div>
     );
   }
 }
 
-const Grip = moveable(_Grip);
+const Grip = 
+  DragSource('x', {
+    beginDrag: (props) => props,
+  }, (connect, monitor) => {
+    return ({
+      connectDragSource: connect.dragSource(),
+      isDragging: monitor.isDragging()
+    });
+  })
+  (
+  moveable((dx, dy) => {
+    // store.dispatch();
+  })
+  (_Grip)
+  );
 
 class _HeaderCell extends React.Component {
   render() {
@@ -179,7 +241,11 @@ class _HeaderCell extends React.Component {
             onClick={e => contextTrigger.handleContextClick(e)}
             ><span>v</span></a>
         </ContextMenuTrigger>
-        <_Grip />
+        <Grip onMove={(dx, dy) => {
+          console.log('onMove', columnIndex, dx);
+          const newWidth = this.props.metadata.header[content].width + dx;
+          store.dispatch(actions.resize(columnIndex, newWidth))
+        }} />
        </div>
      ));
   }
@@ -223,6 +289,10 @@ class Layout_ extends React.Component {
       )  
     }
     
+    const columnWidth = ({ index }) => 
+      this.props.metadata.header[this.props.metadata.order[index]].width;
+
+    console.log('render', this.props)
     const columnCount = _.keys(this.props.metadata.header).length;
     const headerProps = props => Object.assign({}, props, this.props);
     return <ScrollSync>
@@ -239,7 +309,7 @@ class Layout_ extends React.Component {
               }}
               cellRenderer={props => <HeaderCell {...headerProps(props)} />}
               columnCount={columnCount}
-              columnWidth={100}
+              columnWidth={columnWidth}
               height={21}
               rowCount={1}
               rowHeight={21}
@@ -251,7 +321,7 @@ class Layout_ extends React.Component {
               className={classNames('GridBody')}
               cellRenderer={cellRenderer}
               columnCount={columnCount}
-              columnWidth={100}
+              columnWidth={columnWidth}
               height={300}
               rowCount={this.props.data.length}
               rowHeight={21}
