@@ -122,13 +122,6 @@ const moveable = Component => {
   return Moveable;
 };
 
-// @DragSource('grip', {
-//   beginDrag: _.identity,
-// }, (connect, monitor) => ({
-//   connectDragSource: connect.dragSource(),
-//   isDragging: monitor.isDragging(),
-//   offset: monitor.getClientOffset(),
-// }))
 class _Grip extends React.Component {
   render() {
     console.log('offset', this.props.offset)
@@ -152,14 +145,6 @@ class _Grip extends React.Component {
 
 const Grip = moveable(_Grip);
 
-// @DragSource(dndType, cellSource, (connect, monitor) => ({
-//   connectDragSource: connect.dragSource(),
-//   isDragging: monitor.isDragging()
-// }))
-// @DropTarget(dndType, dropSpec, (connect, monitor) => ({
-//   connectDropTarget: connect.dropTarget(),
-//   isOver: monitor.isOver(),
-// }))
 class _HeaderCell extends React.Component {
   render() {
     let { columnIndex, key, rowIndex, style } = this.props;
@@ -211,7 +196,6 @@ const HeaderCell =
     }))(_HeaderCell)
   )
 
-// @DragDropContext(ReactDnDHTML5Backend)
 class Layout_ extends React.Component {
   render() {
     let props = this.props;
