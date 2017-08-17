@@ -13,7 +13,7 @@ import { connect } from 'react-redux';
 import { ContextMenu, 
   MenuItem, ContextMenuTrigger } from 'react-contextmenu';
 import 'react-virtualized/styles.css';
-import { Table, Column, Grid, ScrollSync } from 'react-virtualized';
+import { Table, Column, Grid, ScrollSync, ColumnSizer } from 'react-virtualized';
 import { DragSource, DropTarget, DragDropContext } from 'react-dnd';
 import ReactDnDHTML5Backend from 'react-dnd-html5-backend';
 
@@ -55,7 +55,7 @@ const reducer = (state, { type, ...rest }) => {
           header: {
             ...state.metadata.header,
             [columnKey]: {
-              width: delta,
+              width: Math.max(delta, 30),
             },
           },
         },
@@ -120,61 +120,32 @@ const dropSpec = {
   }
 };
 
-const moveable = () => Component => {
-  class Moveable extends Component {
-    state = { startX: 0, startY: 0, endX: 0, endY: 0 }
-    constructor(...args) {
-      super(...args);
-    }
-    render() {
-      const props = {
-        ...this.props,
-        onMouseDown(e) {
-          console.log('onMouseDown', e, e.clientX, e.clientY);
-        },
-        onMouseMove(e) {
-          // console.log('onMouseMove', e)
-        },
-        onMouseUp(e) {
-          console.log('onMouseUp', e);
-        },
-        onDrag: (e) => {
-          console.log('onDrag', this, e, e.clientX, e.clientY);
-          this && this.setState({
-            endX: e.clientX,
-            endY: e.clientY,
-          });
-          this.props.onMove && 
-            this.props.onMove(
-              this.state.endX - this.state.startX,
-              this.state.endY - this.state.startY);
-        },
-        onDragStart: (e) => {
-          console.log('onDragStart', this, e)
-          this && this.setState({
-            startX: e.clientX,
-            startY: e.clientY,
-            endX: e.clientX,
-            endY: e.clientY,
-          });
-        },
-        onDragEnd: (e) => {
-          console.log('onDragEnd', e, e.clientX, e.clientY);
-          this.props.onMove && 
-            this.props.onMove(
-              this.state.endX - this.state.startX,
-              this.state.endY - this.state.startY);
-        },
-      };
-      return <Component {...props} />;
-    }
-  };
-  Moveable.displayName = `moveable(${Component.displayName || Component.name})`;
-  return Moveable;
-};
-
-// TODO(ET): merge _Grip and movable
 class _Grip extends React.Component {
+  state = { startX: 0, startY: 0, endX: 0, endY: 0 }
+  constructor(...args) {
+    super(...args);
+  }
+
+  onDrag = (e) => {
+    this.setState({
+      endX: e.clientX,
+      endY: e.clientY,
+    });
+    this.props.onMove && 
+      this.props.onMove(
+        this.state.endX - this.state.startX,
+        this.state.endY - this.state.startY);
+  }
+  onDragStart = (e) => {
+    this.setState({
+      startX: e.clientX,
+      startY: e.clientY,
+      endX: e.clientX,
+      endY: e.clientY,
+    });
+    this.props.onStart && this.props.onStart();
+  }
+
   render() {
     return this.props.connectDragSource(
       <div style={{
@@ -185,7 +156,10 @@ class _Grip extends React.Component {
           cursor: 'col-resize',
           zIndex: 1,
         }} {...this.props}
-        >
+        onDrag={this.onDrag}
+        onDragStart={this.onDragStart}
+        onDragEnd={this.onDragEnd}
+      >
       </div>
     );
   }
@@ -201,9 +175,6 @@ const Grip =
     });
   })
   (
-  moveable((dx, dy) => {
-    // store.dispatch();
-  })
   (_Grip)
   );
 
@@ -241,11 +212,15 @@ class _HeaderCell extends React.Component {
             onClick={e => contextTrigger.handleContextClick(e)}
             ><span>v</span></a>
         </ContextMenuTrigger>
-        <Grip onMove={(dx, dy) => {
-          console.log('onMove', columnIndex, dx);
-          const newWidth = this.props.metadata.header[content].width + dx;
-          store.dispatch(actions.resize(columnIndex, newWidth))
-        }} />
+        <Grip onMove={_.throttle((dx, dy) => {
+            console.log('onMove', columnIndex, dx);
+            const newWidth = this.state.width + dx;
+            store.dispatch(actions.resize(columnIndex, newWidth))
+          }, 200)}
+          onStart={() => {
+            this.setState({ width: this.props.metadata.header[content].width })
+          }}
+        />
        </div>
      ));
   }
@@ -260,9 +235,19 @@ const HeaderCell =
       connectDropTarget: connect.dropTarget(),
       isOver: monitor.isOver(),
     }))(_HeaderCell)
-  )
+  );
 
 class Layout_ extends React.Component {
+  componentDidUpdate(prevProps, prevState) {
+    if (
+      !_.isEqual(prevProps.metadata, this.props.metadata) &&
+      this._headerGrid && this._bodyGrid
+    ) {
+      this._headerGrid.recomputeGridSize();
+      this._bodyGrid.recomputeGridSize();
+    }
+  }
+
   render() {
     let props = this.props;
     const styles = {
@@ -291,8 +276,7 @@ class Layout_ extends React.Component {
     
     const columnWidth = ({ index }) => 
       this.props.metadata.header[this.props.metadata.order[index]].width;
-
-    console.log('render', this.props)
+    
     const columnCount = _.keys(this.props.metadata.header).length;
     const headerProps = props => Object.assign({}, props, this.props);
     return <ScrollSync>
@@ -301,8 +285,11 @@ class Layout_ extends React.Component {
           scrollLeft,
           onScroll
         }) => {
+          console.log('render', this.props)
           return <div style={styles}>
             <Grid
+              ref={that => this._headerGrid = that}
+              header={this.props.metadata.header}
               style={{
                 overflow: 'hidden',
                 background: 'white',
@@ -318,6 +305,7 @@ class Layout_ extends React.Component {
               className={classNames('')}
             />
             <Grid
+              ref={that => this._bodyGrid = that}
               className={classNames('GridBody')}
               cellRenderer={cellRenderer}
               columnCount={columnCount}
