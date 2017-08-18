@@ -20,6 +20,9 @@ import ReactDnDHTML5Backend from 'react-dnd-html5-backend';
 import 'flatpickr/dist/themes/material_green.css';
 import Flatpickr from 'react-flatpickr';
 
+import Select from 'react-select';
+import 'react-select/dist/react-select.css';
+
 const actions = {
   reorder: (from, to) => 
     ({ type: 'REORDER', from, to }),
@@ -297,6 +300,27 @@ class DateGridFilter extends React.Component {
   }
 }
 
+class EnumGridFilter extends React.Component {
+  state = {
+    values: [],
+  }
+  onChange = (values) => this.setState({ values })
+  render() {
+    return (
+      <Select 
+        multi
+        className='EnumGridFilter__Select'
+        value={this.state.values}
+        options={[
+          { value: 'one', label: 'One' },
+          { value: 'two', label: 'Two' }
+        ]}
+        onChange={this.onChange}
+      />
+    );
+  }
+}
+
 class Layout_ extends React.Component {
   state = {
     menuIsActive: false,
@@ -393,6 +417,7 @@ class Layout_ extends React.Component {
             >
               <GridFilter />
               <DateGridFilter />
+              <EnumGridFilter />
             </div>
             <ContextMenu id="dupa" className='ContextMenu'
               onHide={() => this.setState({ menuIsActive: false })}
