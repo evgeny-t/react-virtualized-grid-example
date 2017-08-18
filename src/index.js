@@ -17,6 +17,9 @@ import { Table, Column, Grid, ScrollSync, ColumnSizer } from 'react-virtualized'
 import { DragSource, DropTarget, DragDropContext } from 'react-dnd';
 import ReactDnDHTML5Backend from 'react-dnd-html5-backend';
 
+import 'flatpickr/dist/themes/material_green.css';
+import Flatpickr from 'react-flatpickr';
+
 const actions = {
   reorder: (from, to) => 
     ({ type: 'REORDER', from, to }),
@@ -274,6 +277,26 @@ class GridFilter extends React.Component {
   }
 }
 
+class DateGridFilter extends React.Component {
+  render() {
+    return (
+      <div className={cx('GridFilter', this.props.className)}>
+        <input type="checkbox" 
+          onClick={e => e.stopPropagation()} 
+        />
+        <span>After:</span>
+        <Flatpickr 
+          style={{ width: 80 }}
+        />
+        <span>Before:</span>
+        <Flatpickr 
+          style={{ width: 80 }}
+        />
+      </div>
+    );
+  }
+}
+
 class Layout_ extends React.Component {
   state = {
     menuIsActive: false,
@@ -369,6 +392,7 @@ class Layout_ extends React.Component {
                 }}
             >
               <GridFilter />
+              <DateGridFilter />
             </div>
             <ContextMenu id="dupa" className='ContextMenu'
               onHide={() => this.setState({ menuIsActive: false })}
