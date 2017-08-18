@@ -179,6 +179,14 @@ const Grip =
   );
 
 class _HeaderCell extends React.Component {
+  state = {
+    didTriggerMenu: false,
+  }
+  componentWillReceiveProps(nextProps) {
+    if (this.props.menuIsActive && !nextProps.menuIsActive) {
+      this.setState({ didTriggerMenu: false });
+    }
+  }
   render() {
     let { columnIndex, key, rowIndex, style } = this.props;
     
@@ -200,17 +208,30 @@ class _HeaderCell extends React.Component {
           <span>{_.toString(content)}</span>
         </div>
         <ContextMenuTrigger 
-          id='dupa' ref={trigger => contextTrigger = trigger}>
+          id='dupa' ref={trigger => contextTrigger = trigger}
+          attributes={{
+            style: { 
+              height: '100%', 
+            }
+          }}
+        >
           <a href='#' style={{ 
-              display: 'flex',
+              textDecoration: 'none',
+              borderLeftStyle: 'solid',
+              borderLeftColor: '#222',
+              borderLeftWidth: 1,
               alignItems: 'center',
               height: '100%',
               width: 20,
-              border: '1px solid #131',
               justifyContent: 'center',
+              ...(this.props.menuIsActive && this.state.didTriggerMenu ? 
+                    { display: 'flex' } : {})
+            }} className={classNames('GridHeader__MenuTrigger', 'GridHeader__MenuTrigger--on')}
+            onClick={e => {
+              this.setState({ didTriggerMenu: true });
+              contextTrigger.handleContextClick(e);
             }}
-            onClick={e => contextTrigger.handleContextClick(e)}
-            ><span>v</span></a>
+            ><span>▾</span></a>
         </ContextMenuTrigger>
         <Grip onMove={_.throttle((dx, dy) => {
             console.log('onMove', columnIndex, dx);
@@ -238,6 +259,10 @@ const HeaderCell =
   );
 
 class Layout_ extends React.Component {
+  state = {
+    menuIsActive: false,
+  }
+
   componentDidUpdate(prevProps, prevState) {
     if (
       !_.isEqual(prevProps.metadata, this.props.metadata) &&
@@ -293,8 +318,13 @@ class Layout_ extends React.Component {
               style={{
                 overflow: 'hidden',
                 background: 'white',
+                zIndex: 1,
               }}
-              cellRenderer={props => <HeaderCell {...headerProps(props)} />}
+              cellRenderer={props => 
+                <HeaderCell 
+                  {...headerProps(props)} 
+                  menuIsActive={this.state.menuIsActive} 
+                />}
               columnCount={columnCount}
               columnWidth={columnWidth}
               height={21}
@@ -316,9 +346,17 @@ class Layout_ extends React.Component {
               width={300}
               onScroll={onScroll}
             />
-            <ContextMenu id="dupa">
+            <ContextMenu id="dupa" className='ContextMenu'
+              onHide={() => this.setState({ menuIsActive: false })}
+              onShow={() => this.setState({ menuIsActive: true })}
+            >
               <MenuItem data={"some_data"} onClick={null}>
-                ContextMenu Item 1
+                <input type="checkbox" 
+                  onClick={e => e.stopPropagation()} 
+                />
+                <input type="text" 
+                  onClick={e => e.stopPropagation()} 
+                />
               </MenuItem>
               <MenuItem data={"some_data"} onClick={null}>
                 ContextMenu Item 2

@@ -31,6 +31,19 @@ body {
   /* background: blue; */
 }
 
+.GridHeader__MenuTrigger {
+    display: none;
+}
+.GridHeader__MenuTrigger--on {
+    /* display: flex; */
+}
+.GridHeader:hover .GridHeader__MenuTrigger {
+    display: flex;
+}
+
+.ContextMenu {
+    z-index: 1;
+}
 
 /* header menu */
 
