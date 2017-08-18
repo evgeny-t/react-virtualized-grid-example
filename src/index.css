@@ -45,6 +45,24 @@ body {
     z-index: 1;
 }
 
+.GridFilter {
+    border-style: dotted;
+    border-color: darkseagreen;
+    border-width: 2px;
+
+    display: flex;
+    align-items: center;
+}
+
+.GridFilter input:first-child {
+    margin: 0px 3px;
+}
+
+.GridFilter input {
+    vertical-align: middle;
+    margin: 0px;
+}
+
 /* header menu */
 
 .react-contextmenu {

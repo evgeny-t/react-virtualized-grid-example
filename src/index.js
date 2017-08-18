@@ -5,7 +5,7 @@ import App from './App';
 import registerServiceWorker from './registerServiceWorker';
 
 import _ from 'lodash';
-import classNames from 'classnames';
+import cx from 'classnames';
 
 import { createStore } from 'redux';
 import { connect } from 'react-redux';
@@ -202,7 +202,7 @@ class _HeaderCell extends React.Component {
           border: this.props.isOver ? '3px solid black' : 
             '1px solid #adadad'
         }}
-        className={classNames('GridCell', 'GridHeader')}
+        className={cx('GridCell', 'GridHeader')}
        >
         <div style={{ width: '100%',  }}>
           <span>{_.toString(content)}</span>
@@ -226,7 +226,7 @@ class _HeaderCell extends React.Component {
               justifyContent: 'center',
               ...(this.props.menuIsActive && this.state.didTriggerMenu ? 
                     { display: 'flex' } : {})
-            }} className={classNames('GridHeader__MenuTrigger', 'GridHeader__MenuTrigger--on')}
+            }} className={cx('GridHeader__MenuTrigger', 'GridHeader__MenuTrigger--on')}
             onClick={e => {
               this.setState({ didTriggerMenu: true });
               contextTrigger.handleContextClick(e);
@@ -257,6 +257,22 @@ const HeaderCell =
       isOver: monitor.isOver(),
     }))(_HeaderCell)
   );
+
+class GridFilter extends React.Component {
+  render() {
+    return (
+      <div className={cx('GridFilter', this.props.className)}>
+        <input type="checkbox" 
+          onClick={e => e.stopPropagation()} 
+        />
+        <input type="text" 
+          onClick={e => e.stopPropagation()} 
+          style={{ width: '100%', }}
+        />
+      </div>
+    );
+  }
+}
 
 class Layout_ extends React.Component {
   state = {
@@ -292,7 +308,7 @@ class Layout_ extends React.Component {
             ...style,
             ...cellStyles,
           }}
-          className={classNames('GridCell')}
+          className={cx('GridCell')}
         >
           {_.toString(row[props.metadata.order[columnIndex]])}
         </div>
@@ -332,11 +348,11 @@ class Layout_ extends React.Component {
               rowHeight={21}
               width={283}
               scrollLeft={scrollLeft}
-              className={classNames('')}
+              className={cx('')}
             />
             <Grid
               ref={that => this._bodyGrid = that}
-              className={classNames('GridBody')}
+              className={cx('GridBody')}
               cellRenderer={cellRenderer}
               columnCount={columnCount}
               columnWidth={columnWidth}
@@ -346,17 +362,20 @@ class Layout_ extends React.Component {
               width={300}
               onScroll={onScroll}
             />
+            <div className={cx('react-contextmenu-item')}
+                style={{
+                  background: '#cacaf3',
+                  width: 300,
+                }}
+            >
+              <GridFilter />
+            </div>
             <ContextMenu id="dupa" className='ContextMenu'
               onHide={() => this.setState({ menuIsActive: false })}
               onShow={() => this.setState({ menuIsActive: true })}
             >
               <MenuItem data={"some_data"} onClick={null}>
-                <input type="checkbox" 
-                  onClick={e => e.stopPropagation()} 
-                />
-                <input type="text" 
-                  onClick={e => e.stopPropagation()} 
-                />
+                <GridFilter />
               </MenuItem>
               <MenuItem data={"some_data"} onClick={null}>
                 ContextMenu Item 2
