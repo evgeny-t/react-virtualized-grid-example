@@ -1,0 +1,32 @@
+.EnumGridFilter__Select .Select-input {
+  height: 20px;
+  position: absolute;
+  top: 0px;
+  line-height: normal;
+}
+.EnumGridFilter__Select .Select-input > input {
+  padding: 0;
+}
+
+.EnumGridFilter__Select .Select-placeholder {
+  height: 20px;
+  line-height: 20px;
+  font-size: 14px;
+}
+
+.EnumGridFilter__Select .Select-control {
+  line-height: 20px;
+  height: 20px;
+}
+
+.EnumGridFilter__Select.Select--multi .Select-value {
+  line-height: 1.0;
+  font-size: 0.7em;
+  margin-left: 2px;
+  margin-top: 2px;
+}
+
+.EnumGridFilter__Select .Select-option {
+  padding: 2px 5px;
+  font-size: 11px;
+}
