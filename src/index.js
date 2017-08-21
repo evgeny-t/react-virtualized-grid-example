@@ -2,8 +2,6 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import './select.css';
-import App from './App';
-import registerServiceWorker from './registerServiceWorker';
 
 import _ from 'lodash';
 import cx from 'classnames';
@@ -14,7 +12,7 @@ import { connect } from 'react-redux';
 import { ContextMenu, 
   MenuItem, ContextMenuTrigger } from 'react-contextmenu';
 import 'react-virtualized/styles.css';
-import { Table, Column, Grid, ScrollSync, ColumnSizer } from 'react-virtualized';
+import { Grid, ScrollSync, } from 'react-virtualized';
 import { DragSource, DropTarget, DragDropContext } from 'react-dnd';
 import ReactDnDHTML5Backend from 'react-dnd-html5-backend';
 
@@ -54,7 +52,6 @@ const reducer = (state, { type, ...rest }) => {
     case 'RESIZE': {
       const { columnIndex, delta } = rest;
       const columnKey = state.metadata.order[columnIndex];
-      const width = state.metadata.header[columnKey].width;
       const newState = {
         ...state,
         metadata: {
@@ -129,10 +126,6 @@ const dropSpec = {
 
 class _Grip extends React.Component {
   state = { startX: 0, startY: 0, endX: 0, endY: 0 }
-  constructor(...args) {
-    super(...args);
-  }
-
   onDrag = (e) => {
     this.setState({
       endX: e.clientX,
@@ -154,15 +147,17 @@ class _Grip extends React.Component {
   }
 
   render() {
+    const { onMove, onStart, 
+      isDragging, connectDragSource,  ...rest } = this.props;
     return this.props.connectDragSource(
       <div style={{
-          background: this.props.isDragging ? 'black' : 'transparent',
+          background: isDragging ? 'black' : 'transparent',
           width: 10,
           height: '100%',
           marginRight: '-5px',
           cursor: 'col-resize',
           zIndex: 1,
-        }} {...this.props}
+        }} {...rest}
         onDrag={this.onDrag}
         onDragStart={this.onDragStart}
         onDragEnd={this.onDragEnd}
@@ -180,10 +175,7 @@ const Grip =
       connectDragSource: connect.dragSource(),
       isDragging: monitor.isDragging()
     });
-  })
-  (
-  (_Grip)
-  );
+  })(_Grip);
 
 class _HeaderCell extends React.Component {
   state = {
@@ -195,7 +187,7 @@ class _HeaderCell extends React.Component {
     }
   }
   render() {
-    let { columnIndex, key, rowIndex, style } = this.props;
+    let { columnIndex, key, /* rowIndex, */ style } = this.props;
     
     let content = this.props.metadata.order[columnIndex];
     let contextTrigger;
@@ -222,7 +214,7 @@ class _HeaderCell extends React.Component {
             }
           }}
         >
-          <a href='#' style={{ 
+          <a href='#context-menu' style={{ 
               textDecoration: 'none',
               borderLeftStyle: 'solid',
               borderLeftColor: '#222',
@@ -266,6 +258,12 @@ const HeaderCell =
   );
 
 class GridFilter extends React.Component {
+  state = {
+    value: '',
+  }
+  handleChange = e => {
+    this.setState({ value: e.target.value });
+  }
   render() {
     return (
       <div className={cx('GridFilter', this.props.className)}>
@@ -275,6 +273,8 @@ class GridFilter extends React.Component {
         <input type="text" 
           onClick={e => e.stopPropagation()} 
           style={{ width: '100%', }}
+          value={this.state.value}
+          onChange={this.handleChange}
         />
       </div>
     );
@@ -429,14 +429,14 @@ class Layout_ extends React.Component {
               onHide={() => this.setState({ menuIsActive: false })}
               onShow={() => this.setState({ menuIsActive: true })}
             >
-              <MenuItem data={"some_data"} onClick={null}>
+              <MenuItem data={{a:"some_data"}} onClick={null}>
                 <GridFilter />
               </MenuItem>
-              <MenuItem data={"some_data"} onClick={null}>
+              <MenuItem data={{a:"some_data"}} onClick={null}>
                 ContextMenu Item 2
               </MenuItem>
               <MenuItem divider />
-              <MenuItem data={"some_data"} onClick={null}>
+              <MenuItem data={{a:"some_data"}} onClick={null}>
                 ContextMenu Item 3
               </MenuItem>
             </ContextMenu>
@@ -453,4 +453,3 @@ const Layout = connect(_.identity, _.constant({}))(
 
 ReactDOM.render(<Layout store={store} />, 
   document.getElementById('root'));
-// registerServiceWorker();
