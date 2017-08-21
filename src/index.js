@@ -308,16 +308,21 @@ class EnumGridFilter extends React.Component {
   onChange = (values) => this.setState({ values })
   render() {
     return (
-      <Select 
-        multi
-        className='EnumGridFilter__Select'
-        value={this.state.values}
-        options={[
-          { value: 'one', label: 'One' },
-          { value: 'two', label: 'Two' }
-        ]}
-        onChange={this.onChange}
-      />
+      <div className={cx('GridFilter', this.props.className)}>
+        <input type="checkbox" 
+          onClick={e => e.stopPropagation()} 
+        />
+        <Select 
+          multi
+          className='EnumGridFilter__Select'
+          value={this.state.values}
+          options={[
+            { value: 'one', label: 'One' },
+            { value: 'two', label: 'Two' }
+          ]}
+          onChange={this.onChange}
+        />
+      </div>
     );
   }
 }

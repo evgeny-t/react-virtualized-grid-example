@@ -1,8 +1,12 @@
-.EnumGridFilter__Select .Select-input {
-  height: 20px;
-  position: absolute;
-  top: 0px;
+.EnumGridFilter__Select {
+  width: 100%;
+  position: relative;
+}
+
+.EnumGridFilter__Select .Select-control .Select-input {
   line-height: normal;
+  height: 20px;
+  margin-left: 5px;
 }
 .EnumGridFilter__Select .Select-input > input {
   padding: 0;
