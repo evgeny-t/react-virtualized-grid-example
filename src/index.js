@@ -16,6 +16,9 @@ import { Grid, ScrollSync, } from 'react-virtualized';
 import { DragSource, DropTarget, DragDropContext } from 'react-dnd';
 import ReactDnDHTML5Backend from 'react-dnd-html5-backend';
 
+
+import { compose, withState, withHandlers } from 'recompose';
+
 import 'flatpickr/dist/themes/material_green.css';
 import Flatpickr from 'react-flatpickr';
 
@@ -257,29 +260,31 @@ const HeaderCell =
     }))(_HeaderCell)
   );
 
-class GridFilter extends React.Component {
-  state = {
-    value: '',
-  }
-  handleChange = e => {
-    this.setState({ value: e.target.value });
-  }
-  render() {
-    return (
-      <div className={cx('GridFilter', this.props.className)}>
-        <input type="checkbox" 
-          onClick={e => e.stopPropagation()} 
-        />
-        <input type="text" 
-          onClick={e => e.stopPropagation()} 
-          style={{ width: '100%', }}
-          value={this.state.value}
-          onChange={this.handleChange}
-        />
-      </div>
-    );
-  }
+
+
+const GridFilter_ = props => {
+  return (
+    <div className={cx('GridFilter', props.className)}>
+      <input type="checkbox" 
+        onClick={e => e.stopPropagation()} 
+      />
+      <input type="text" 
+        onClick={e => e.stopPropagation()} 
+        style={{ width: '100%', }}
+        value={props.value}
+        onChange={props.handleInput}
+      />
+    </div>
+  );
 }
+
+const GridFilter = 
+  compose(
+    withState('value', 'setValue', ''),
+    withHandlers({
+      handleInput: ({ setValue }) => 
+        event => setValue(event.target.value),
+    }))(GridFilter_);
 
 class DateGridFilter extends React.Component {
   render() {
