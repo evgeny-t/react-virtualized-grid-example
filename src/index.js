@@ -379,7 +379,6 @@ class Layout_ extends React.Component {
           scrollLeft,
           onScroll
         }) => {
-          console.log('render', this.props)
           return <div style={styles}>
             <Grid
               ref={that => this._headerGrid = that}
