@@ -261,30 +261,56 @@ const HeaderCell =
   );
 
 
-
 const GridFilter_ = props => {
+  console.log('props', props)
   return (
     <div className={cx('GridFilter', props.className)}>
       <input type="checkbox" 
+        checked={false}
         onClick={e => e.stopPropagation()} 
+        onChange={e => console.log(e.target.value)}
       />
       <input type="text" 
         onClick={e => e.stopPropagation()} 
         style={{ width: '100%', }}
-        value={props.value}
-        onChange={props.handleInput}
+        value={props.dupa}
+        onChange={props.handleDupa}
       />
     </div>
   );
 }
 
+const F = _.debounce(() => console.log('debounced'), 1000);
+
+const withDebouncedInput = (propertyKey, wait) => {
+  const prefix = 'wDI_';
+  const key = `${prefix}${propertyKey}`;
+  const setterKey = `${prefix}_set${propertyKey}`;
+  const handlerKey = `handle${_.startCase(propertyKey)}`;
+  return compose(
+    withState(key, setterKey, ''),
+    withHandlers({
+      [handlerKey]: ({ [setterKey]: setValue }) => 
+        event => {
+          setValue(event.target.value);
+          console.log('setValue')
+          F();
+        },
+    }));
+  };
+
 const GridFilter = 
-  compose(
+  /* compose(
     withState('value', 'setValue', ''),
     withHandlers({
-      handleInput: ({ setValue }) => 
-        event => setValue(event.target.value),
-    }))(GridFilter_);
+      handleInput: ({ setValue }) => event => {
+        setValue(event.target.value);
+        console.log('setValue')
+        F();
+      },
+    })) */
+    withDebouncedInput('dupa', 1000)
+    (GridFilter_);
 
 class DateGridFilter extends React.Component {
   render() {
