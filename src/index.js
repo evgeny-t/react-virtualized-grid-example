@@ -483,5 +483,10 @@ const Layout = connect(_.identity, _.constant({}))(
   DragDropContext(ReactDnDHTML5Backend)(Layout_)
 );
 
-ReactDOM.render(<Layout store={store} />, 
-  document.getElementById('root'));
+ReactDOM.render(<Layout 
+  store={store} 
+  filterRenderers={{
+    name: GridFilter,
+    date: DateGridFilter,
+  }}
+/>, document.getElementById('root'));
