@@ -416,6 +416,8 @@ class Layout_ extends React.Component {
               header={this.props.metadata.header}
               style={{
                 overflow: 'hidden',
+                overflowX: 'hidden',
+                overflowY: 'hidden',
                 background: 'white',
                 zIndex: 1,
               }}
